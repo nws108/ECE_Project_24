@@ -1,0 +1,53 @@
+#define SENSOR_1 A0
+#define SENSOR_2 A1
+#define RED_LIGHT_1 2
+#define GREEN_LIGHT_1 3
+#define RED_LIGHT_2 4
+#define GREEN_LIGHT_2 5
+
+const int threshold = 100; // Adjust based on sensor calibration
+
+void setup() {
+  pinMode(SENSOR_1, INPUT);
+  pinMode(SENSOR_2, INPUT);
+  pinMode(RED_LIGHT_1, OUTPUT);
+  pinMode(GREEN_LIGHT_1, OUTPUT);
+  pinMode(RED_LIGHT_2, OUTPUT);
+  pinMode(GREEN_LIGHT_2, OUTPUT);
+
+  // Initialize both red lights on and green lights off
+  digitalWrite(RED_LIGHT_1, HIGH);
+  digitalWrite(GREEN_LIGHT_1, LOW);
+  digitalWrite(RED_LIGHT_2, HIGH);
+  digitalWrite(GREEN_LIGHT_2, LOW);
+}
+
+void loop() {
+  int force1 = analogRead(SENSOR_1);
+  int force2 = analogRead(SENSOR_2);
+
+  bool car1 = force1 > threshold;
+  bool car2 = force2 > threshold;
+
+  if (car1 && !car2) {
+    // Car 1 has the right of way
+    digitalWrite(RED_LIGHT_1, LOW);
+    digitalWrite(GREEN_LIGHT_1, HIGH);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
+  } else if (car2 && !car1) {
+    // Car 2 has the right of way
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, LOW);
+    digitalWrite(GREEN_LIGHT_2, HIGH);
+  } else {
+    // Default state: Both red lights on
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
+  }
+
+  delay(500); // Adjust as necessary
+}

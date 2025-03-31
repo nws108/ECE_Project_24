@@ -1,0 +1,12 @@
+const int vPin = A0, cPin = A1, bPin = A2, mpptPin = 9;
+void setup() { Serial.begin(9600); pinMode(mpptPin, OUTPUT); }
+void loop() {
+    float v = analogRead(vPin) * 0.0488, c = analogRead(cPin) * 0.0098, b = analogRead(bPin) * 0.0977;
+    float p = v * c;
+    Serial.print("V: "); Serial.print(v); Serial.print("V C: "); Serial.print(c);
+    Serial.print("A P: "); Serial.print(p); Serial.print("W B: "); Serial.println(b);
+    static float prevP = 0; static int duty = 128;
+    if (b < 75) duty = constrain(duty + (p > prevP ? 5 : -5), 0, 255);
+    else duty = 0;
+    analogWrite(mpptPin, duty); prevP = p; delay(1000);
+}

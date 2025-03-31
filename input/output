@@ -1,0 +1,65 @@
+//Wade fulton
+const int redLED1 = 8;
+const int greenLED1 = 7;
+const int redLED2 = 6;
+const int greenLED2 = 5;
+
+// Define pins for the pressure sensors
+const int pressureSensor1Pin = A0; // Analog pin for Sensor 1
+const int pressureSensor2Pin = A1; // Analog pin for Sensor 2
+
+// Define threshold values for the pressure sensors
+const int pressureThreshold1 = 500; // Adjust this for Sensor 1
+const int pressureThreshold2 = 500; // Adjust this for Sensor 2
+
+// Variables to store sensor readings
+int pressureValue1 = 0;
+int pressureValue2 = 0;
+
+void setup() {
+  // Initialize LED pins as OUTPUT
+  pinMode(redLED1, OUTPUT);
+  pinMode(redLED2, OUTPUT);
+  pinMode(greenLED1, OUTPUT);
+  pinMode(greenLED2, OUTPUT);
+
+  // Initialize serial communication
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Read the pressure sensor values
+  pressureValue1 = analogRead(pressureSensor1Pin);
+  pressureValue2 = analogRead(pressureSensor2Pin);
+
+  // Print the sensor values for debugging
+  Serial.print("Sensor 1 Value: ");
+  Serial.print(pressureValue1);
+  Serial.print(" | Sensor 2 Value: ");
+  Serial.println(pressureValue2);
+
+  // Control LEDs based on Sensor 1 readings
+  if (pressureValue1 > pressureThreshold1) {
+    // Pressure detected on Sensor 1 -> Turn on red LEDs
+    digitalWrite(redLED1, HIGH);
+    digitalWrite(greenLED1, LOW);
+  } else {
+    // No pressure on Sensor 1 -> Turn off red LEDs
+    digitalWrite(redLED1, LOW);
+    digitalWrite(greenLED1, HIGH);
+  }
+
+  // Control LEDs based on Sensor 2 readings
+  if (pressureValue2 > pressureThreshold2) {
+    // Pressure detected on Sensor 2 -> Turn on green LEDs
+    digitalWrite(redLED2, HIGH);
+    digitalWrite(greenLED2, LOW);
+  } else {
+    // No pressure on Sensor 2 -> Turn off green LEDs
+    digitalWrite(redLED2, LOW);
+    digitalWrite(greenLED2, HIGH);
+  }
+
+  // Add a short delay to stabilize readings
+  delay(100);
+}

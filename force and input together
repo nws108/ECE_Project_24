@@ -1,0 +1,96 @@
+// Define LED pins for first system
+const int redLED1 = 8;
+const int greenLED1 = 7;
+const int redLED2 = 6;
+const int greenLED2 = 5;
+
+// Define LED pins for second system
+#define RED_LIGHT_1 2
+#define GREEN_LIGHT_1 3
+#define RED_LIGHT_2 4
+#define GREEN_LIGHT_2 5
+
+// Define sensor pins
+#define SENSOR_1 A0
+#define SENSOR_2 A1
+
+// Pressure thresholds
+const int pressureThreshold1 = 500;
+const int pressureThreshold2 = 500;
+const int threshold = 100; // For right-of-way system
+
+void setup() {
+  // Initialize LED pins for both systems
+  pinMode(redLED1, OUTPUT);
+  pinMode(greenLED1, OUTPUT);
+  pinMode(redLED2, OUTPUT);
+  pinMode(greenLED2, OUTPUT);
+  
+  pinMode(RED_LIGHT_1, OUTPUT);
+  pinMode(GREEN_LIGHT_1, OUTPUT);
+  pinMode(RED_LIGHT_2, OUTPUT);
+  pinMode(GREEN_LIGHT_2, OUTPUT);
+
+  // Initialize sensor inputs
+  pinMode(SENSOR_1, INPUT);
+  pinMode(SENSOR_2, INPUT);
+
+  // Default states
+  digitalWrite(RED_LIGHT_1, HIGH);
+  digitalWrite(GREEN_LIGHT_1, LOW);
+  digitalWrite(RED_LIGHT_2, HIGH);
+  digitalWrite(GREEN_LIGHT_2, LOW);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Read sensor values
+  int pressureValue1 = analogRead(SENSOR_1);
+  int pressureValue2 = analogRead(SENSOR_2);
+
+  Serial.print("Sensor 1: ");
+  Serial.print(pressureValue1);
+  Serial.print(" | Sensor 2: ");
+  Serial.println(pressureValue2);
+
+  // LED control for pressure detection
+  if (pressureValue1 > pressureThreshold1) {
+    digitalWrite(redLED1, HIGH);
+    digitalWrite(greenLED1, LOW);
+  } else {
+    digitalWrite(redLED1, LOW);
+    digitalWrite(greenLED1, HIGH);
+  }
+
+  if (pressureValue2 > pressureThreshold2) {
+    digitalWrite(redLED2, HIGH);
+    digitalWrite(greenLED2, LOW);
+  } else {
+    digitalWrite(redLED2, LOW);
+    digitalWrite(greenLED2, HIGH);
+  }
+
+  // Right-of-way logic
+  bool car1 = pressureValue1 > threshold;
+  bool car2 = pressureValue2 > threshold;
+
+  if (car1 && !car2) {
+    digitalWrite(RED_LIGHT_1, LOW);
+    digitalWrite(GREEN_LIGHT_1, HIGH);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
+  } else if (car2 && !car1) {
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, LOW);
+    digitalWrite(GREEN_LIGHT_2, HIGH);
+  } else {
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
+  }
+
+  delay(500);
+}

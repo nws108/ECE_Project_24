@@ -39,4 +39,71 @@ void setup() {
   pinMode(SENSOR_2, INPUT);
 
   // Default states: Both red
-  digitalWrite(RED_LIGHT_
+  digitalWrite(RED_LIGHT_1, HIGH);
+  digitalWrite(GREEN_LIGHT_1, LOW);
+  digitalWrite(RED_LIGHT_2, HIGH);
+  digitalWrite(GREEN_LIGHT_2, LOW);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Read sensor values
+  int pressureValue1 = analogRead(SENSOR_1);
+  int pressureValue2 = analogRead(SENSOR_2);
+
+  Serial.print("Sensor 1: ");
+  Serial.print(pressureValue1);
+  Serial.print(" | Sensor 2: ");
+  Serial.println(pressureValue2);
+
+  // LED control for pressure detection
+  if (pressureValue1 > pressureThreshold1) {
+    digitalWrite(redLED1, HIGH);
+    digitalWrite(greenLED1, LOW);
+  } else {
+    digitalWrite(redLED1, LOW);
+    digitalWrite(greenLED1, HIGH);
+  }
+
+  if (pressureValue2 > pressureThreshold2) {
+    digitalWrite(redLED2, HIGH);
+    digitalWrite(greenLED2, LOW);
+  } else {
+    digitalWrite(redLED2, LOW);
+    digitalWrite(greenLED2, HIGH);
+  }
+
+  // Right-of-way logic
+  bool car1 = pressureValue1 > threshold;
+  bool car2 = pressureValue2 > threshold;
+
+  if (car1 && !car2) {
+    lastRightOfWay = 1; // Car 1 gets priority
+  } else if (car2 && !car1) {
+    lastRightOfWay = 2; // Car 2 gets priority
+  } else if (!car1 && !car2) {
+    lastRightOfWay = 0; // No cars detected
+  }
+  
+  // Control right-of-way lights
+  if (lastRightOfWay == 1) {
+    digitalWrite(RED_LIGHT_1, LOW);
+    digitalWrite(GREEN_LIGHT_1, HIGH);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
+  } else if (lastRightOfWay == 2) {
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, LOW);
+    digitalWrite(GREEN_LIGHT_2, HIGH);
+  } else {
+    // Default state: Both red if no pressure detected
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
+  }
+
+  delay(500);
+}

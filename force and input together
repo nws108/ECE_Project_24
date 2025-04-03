@@ -1,4 +1,4 @@
-// Define LED pins for first system
+// Define LED pins for first system (pressure indicator)
 const int redLED1 = 2;
 const int greenLED1 = 3;
 const int redLED2 = 4;
@@ -17,10 +17,10 @@ const int greenLED2 = 5;
 // Pressure thresholds
 const int pressureThreshold1 = 500;
 const int pressureThreshold2 = 500;
-const int threshold = 100; // For right-of-way system
+const int threshold = 100; // Right-of-way threshold
 
 // Variable to store last state
-int lastRightOfWay = 1; // 1 = Car 1 has priority, 2 = Car 2 has priority
+int lastRightOfWay = 0; // 0 = No priority, 1 = Car 1, 2 = Car 2
 
 void setup() {
   // Initialize LED pins for both systems
@@ -38,78 +38,5 @@ void setup() {
   pinMode(SENSOR_1, INPUT);
   pinMode(SENSOR_2, INPUT);
 
-  // Default states
-  digitalWrite(RED_LIGHT_1, HIGH);
-  digitalWrite(GREEN_LIGHT_1, LOW);
-  digitalWrite(RED_LIGHT_2, HIGH);
-  digitalWrite(GREEN_LIGHT_2, LOW);
-
-  Serial.begin(9600);
-}
-
-void loop() {
-  // Read sensor values
-  int pressureValue1 = analogRead(SENSOR_1);
-  int pressureValue2 = analogRead(SENSOR_2);
-
-  Serial.print("Sensor 1: ");
-  Serial.print(pressureValue1);
-  Serial.print(" | Sensor 2: ");
-  Serial.println(pressureValue2);
-
-  // LED control for pressure detection
-  if (pressureValue1 > pressureThreshold1) {
-    digitalWrite(redLED1, HIGH);
-    digitalWrite(greenLED1, LOW);
-  } else {
-    digitalWrite(redLED1, LOW);
-    digitalWrite(greenLED1, HIGH);
-  }
-
-  if (pressureValue2 > pressureThreshold2) {
-    digitalWrite(redLED2, HIGH);
-    digitalWrite(greenLED2, LOW);
-  } else {
-    digitalWrite(redLED2, LOW);
-    digitalWrite(greenLED2, HIGH);
-  }
-
-  // Right-of-way logic
-  bool car1 = pressureValue1 > threshold;
-  bool car2 = pressureValue2 > threshold;
-
-  if (car1 && !car2) {
-    lastRightOfWay = 1; // Car 1 gets priority
-  } else if (car2 && !car1) {
-    lastRightOfWay = 2; // Car 2 gets priority
-  }
-  
-  // Maintain last state if both are pressed
-  if (car1 && car2) {
-    if (lastRightOfWay == 1) {
-      digitalWrite(RED_LIGHT_1, LOW);
-      digitalWrite(GREEN_LIGHT_1, HIGH);
-      digitalWrite(RED_LIGHT_2, HIGH);
-      digitalWrite(GREEN_LIGHT_2, LOW);
-    } else {
-      digitalWrite(RED_LIGHT_1, HIGH);
-      digitalWrite(GREEN_LIGHT_1, LOW);
-      digitalWrite(RED_LIGHT_2, LOW);
-      digitalWrite(GREEN_LIGHT_2, HIGH);
-    }
-  } else {
-    if (lastRightOfWay == 1) {
-      digitalWrite(RED_LIGHT_1, LOW);
-      digitalWrite(GREEN_LIGHT_1, HIGH);
-      digitalWrite(RED_LIGHT_2, HIGH);
-      digitalWrite(GREEN_LIGHT_2, LOW);
-    } else {
-      digitalWrite(RED_LIGHT_1, HIGH);
-      digitalWrite(GREEN_LIGHT_1, LOW);
-      digitalWrite(RED_LIGHT_2, LOW);
-      digitalWrite(GREEN_LIGHT_2, HIGH);
-    }
-  }
-
-  delay(500);
-}
+  // Default states: Both red
+  digitalWrite(RED_LIGHT_

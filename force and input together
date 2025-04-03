@@ -82,6 +82,8 @@ void loop() {
     lastRightOfWay = 1; // Car 1 gets priority
   } else if (car2 && !car1) {
     lastRightOfWay = 2; // Car 2 gets priority
+  } else if (car1 && car2 && lastRightOfWay == 0) {
+    lastRightOfWay = 1; // Default to Car 1 if both pressed at the same time
   } else if (!car1 && !car2) {
     lastRightOfWay = 0; // No cars detected
   }

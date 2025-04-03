@@ -4,7 +4,7 @@ const int greenLED1 = 7;
 const int redLED2 = 6;
 const int greenLED2 = 5;
 
-// Define LED pins for second system
+// Define LED pins for second system (right-of-way)
 #define RED_LIGHT_1 2
 #define GREEN_LIGHT_1 3
 #define RED_LIGHT_2 4
@@ -18,6 +18,9 @@ const int greenLED2 = 5;
 const int pressureThreshold1 = 500;
 const int pressureThreshold2 = 500;
 const int threshold = 100; // For right-of-way system
+
+// Variable to store last state
+int lastRightOfWay = 1; // 1 = Car 1 has priority, 2 = Car 2 has priority
 
 void setup() {
   // Initialize LED pins for both systems
@@ -76,20 +79,36 @@ void loop() {
   bool car2 = pressureValue2 > threshold;
 
   if (car1 && !car2) {
-    digitalWrite(RED_LIGHT_1, LOW);
-    digitalWrite(GREEN_LIGHT_1, HIGH);
-    digitalWrite(RED_LIGHT_2, HIGH);
-    digitalWrite(GREEN_LIGHT_2, LOW);
+    lastRightOfWay = 1; // Car 1 gets priority
   } else if (car2 && !car1) {
-    digitalWrite(RED_LIGHT_1, HIGH);
-    digitalWrite(GREEN_LIGHT_1, LOW);
-    digitalWrite(RED_LIGHT_2, LOW);
-    digitalWrite(GREEN_LIGHT_2, HIGH);
+    lastRightOfWay = 2; // Car 2 gets priority
+  }
+  
+  // Maintain last state if both are pressed
+  if (car1 && car2) {
+    if (lastRightOfWay == 1) {
+      digitalWrite(RED_LIGHT_1, LOW);
+      digitalWrite(GREEN_LIGHT_1, HIGH);
+      digitalWrite(RED_LIGHT_2, HIGH);
+      digitalWrite(GREEN_LIGHT_2, LOW);
+    } else {
+      digitalWrite(RED_LIGHT_1, HIGH);
+      digitalWrite(GREEN_LIGHT_1, LOW);
+      digitalWrite(RED_LIGHT_2, LOW);
+      digitalWrite(GREEN_LIGHT_2, HIGH);
+    }
   } else {
-    digitalWrite(RED_LIGHT_1, HIGH);
-    digitalWrite(GREEN_LIGHT_1, LOW);
-    digitalWrite(RED_LIGHT_2, HIGH);
-    digitalWrite(GREEN_LIGHT_2, LOW);
+    if (lastRightOfWay == 1) {
+      digitalWrite(RED_LIGHT_1, LOW);
+      digitalWrite(GREEN_LIGHT_1, HIGH);
+      digitalWrite(RED_LIGHT_2, HIGH);
+      digitalWrite(GREEN_LIGHT_2, LOW);
+    } else {
+      digitalWrite(RED_LIGHT_1, HIGH);
+      digitalWrite(GREEN_LIGHT_1, LOW);
+      digitalWrite(RED_LIGHT_2, LOW);
+      digitalWrite(GREEN_LIGHT_2, HIGH);
+    }
   }
 
   delay(500);

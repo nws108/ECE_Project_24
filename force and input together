@@ -14,7 +14,7 @@ const int greenLED2 = 5;
 #define SENSOR_1 A0  // Controls redLED1 & greenLED1
 #define SENSOR_2 A1  // Controls redLED2 & greenLED2
 
-// For Hot Wheels: Use 50, 50, 20. Can do 100 if pressing down with cars.
+// For Hot Wheels: Use 50, 50, 50. Can do 100 if pressing down with cars.
 const int pressureThreshold1 = 500;
 const int pressureThreshold2 = 500;
 const int threshold = 100; // Right-of-way threshold

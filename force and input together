@@ -1,8 +1,8 @@
 // Define LED pins for first system (pressure indicator)
-const int redLED1 = 2;
-const int greenLED1 = 3;
-const int redLED2 = 4;
-const int greenLED2 = 5;
+const int redLED1 = 6;  // Sensor A0 controls this
+const int greenLED1 = 7;  
+const int redLED2 = 4;   // Sensor A1 now controls this
+const int greenLED2 = 5;  
 
 // Define LED pins for second system (right-of-way)
 #define RED_LIGHT_1 2
@@ -11,11 +11,10 @@ const int greenLED2 = 5;
 #define GREEN_LIGHT_2 5
 
 // Define sensor pins
-#define SENSOR_1 A0
-#define SENSOR_2 A1
+#define SENSOR_1 A0  // Controls redLED1 & greenLED1
+#define SENSOR_2 A1  // Controls redLED2 & greenLED2
 
-//For hotwheels: 50, 50, 20. Can do 100 if we pressed down with the cars.
-// Pressure thresholds
+// For Hot Wheels: Use 50, 50, 20. Can do 100 if pressing down with cars.
 const int pressureThreshold1 = 500;
 const int pressureThreshold2 = 500;
 const int threshold = 100; // Right-of-way threshold

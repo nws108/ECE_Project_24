@@ -107,5 +107,5 @@ void loop() {
     digitalWrite(GREEN_LIGHT_2, LOW);
   }
 
-  delay(500);
+  delay(750);
 }

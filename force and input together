@@ -1,6 +1,6 @@
 // Define LED pins for first system (pressure indicator)
-const int redLED1 = 6;  // Sensor A0 controls this
-const int greenLED1 = 7;  
+const int redLED1 = 2;  // Sensor A0 controls this
+const int greenLED1 = 3;  
 const int redLED2 = 4;   // Sensor A1 now controls this
 const int greenLED2 = 5;  
 

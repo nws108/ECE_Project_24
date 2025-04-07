@@ -10,7 +10,7 @@ const int greenLED2 = 5;
 #define SENSOR_1 A0
 #define SENSOR_2 A1
 
-// Thresholds
+// Thresholds. Can be adjusted as need. Will be 25, 25, 25 or 50, 50, 50.
 const int pressureThreshold1 = 500;
 const int pressureThreshold2 = 500;
 const int threshold = 100;

@@ -1,0 +1,129 @@
+// ----------- Pressure Sensor Right-of-Way System -----------
+
+// Define LED pins for pressure indicators
+const int redLED1 = 2;  // Sensor A0 controls this
+const int greenLED1 = 3;  
+const int redLED2 = 4;   // Sensor A1 now controls this
+const int greenLED2 = 5;  
+
+// Define sensor pins
+#define SENSOR_1 A0
+#define SENSOR_2 A1
+
+// Thresholds
+const int pressureThreshold1 = 500;
+const int pressureThreshold2 = 500;
+const int threshold = 100;
+
+int lastRightOfWay = 0; // 0 = none, 1 = car1, 2 = car2
+
+// ----------- Ultrasonic Sensor Vehicle Counter -----------
+
+const int triggerPin = 7;
+const int echoPin = 6;
+
+int cm = 0;
+int count = 0;
+bool objectPreviouslyDetected = false;
+
+// ----------- Setup -----------
+
+void setup() {
+  // Pressure system setup
+  pinMode(redLED1, OUTPUT);
+  pinMode(greenLED1, OUTPUT);
+  pinMode(redLED2, OUTPUT);
+  pinMode(greenLED2, OUTPUT);
+
+  pinMode(SENSOR_1, INPUT);
+  pinMode(SENSOR_2, INPUT);
+
+  // Default lights: both red
+  digitalWrite(redLED1, HIGH);
+  digitalWrite(greenLED1, LOW);
+  digitalWrite(redLED2, HIGH);
+  digitalWrite(greenLED2, LOW);
+
+  // Ultrasonic setup
+  pinMode(triggerPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  Serial.begin(9600); // For ultrasonic only
+}
+
+// ----------- Main Loop -----------
+
+void loop() {
+  // -------- Pressure Sensor Logic --------
+  int pressureValue1 = analogRead(SENSOR_1);
+  int pressureValue2 = analogRead(SENSOR_2);
+
+  // Sensor LED feedback
+  digitalWrite(redLED1, pressureValue1 > pressureThreshold1 ? HIGH : LOW);
+  digitalWrite(greenLED1, pressureValue1 > pressureThreshold1 ? LOW : HIGH);
+
+  digitalWrite(redLED2, pressureValue2 > pressureThreshold2 ? HIGH : LOW);
+  digitalWrite(greenLED2, pressureValue2 > pressureThreshold2 ? LOW : HIGH);
+
+  // Right-of-way logic
+  bool car1 = pressureValue1 > threshold;
+  bool car2 = pressureValue2 > threshold;
+
+  if (car1 && !car2) {
+    lastRightOfWay = 1;
+  } else if (car2 && !car1) {
+    lastRightOfWay = 2;
+  } else if (car1 && car2 && lastRightOfWay == 0) {
+    lastRightOfWay = 1;
+  } else if (!car1 && !car2) {
+    lastRightOfWay = 0;
+  }
+
+  // Control right-of-way LEDs
+  if (lastRightOfWay == 1) {
+    digitalWrite(redLED1, LOW);
+    digitalWrite(greenLED1, HIGH);
+    digitalWrite(redLED2, HIGH);
+    digitalWrite(greenLED2, LOW);
+  } else if (lastRightOfWay == 2) {
+    digitalWrite(redLED1, HIGH);
+    digitalWrite(greenLED1, LOW);
+    digitalWrite(redLED2, LOW);
+    digitalWrite(greenLED2, HIGH);
+  } else {
+    digitalWrite(redLED1, HIGH);
+    digitalWrite(greenLED1, LOW);
+    digitalWrite(redLED2, HIGH);
+    digitalWrite(greenLED2, LOW);
+  }
+
+  // -------- Ultrasonic Motion Detection --------
+  long duration = readUltrasonicDistance(triggerPin, echoPin);
+  cm = duration * 0.034 / 2;
+
+  int distanceThreshold = 10; // cm
+
+  if (cm > 0 && cm <= distanceThreshold) {
+    if (!objectPreviouslyDetected) {
+      count++;
+      Serial.print("Object detected! Count: ");
+      Serial.println(count);
+      objectPreviouslyDetected = true;
+    }
+  } else {
+    objectPreviouslyDetected = false;
+  }
+
+  delay(100); // Tune as needed
+}
+
+// ----------- Read Ultrasonic Distance -----------
+
+long readUltrasonicDistance(int triggerPin, int echoPin) {
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  return pulseIn(echoPin, HIGH);
+}

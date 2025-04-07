@@ -1,27 +1,51 @@
-int sensorPin = 2;  // PIR sensor input pin
-int sensorState = 0;
-int lastSensorState = 0;
-int objectCount = 0;
+const int triggerPin = 7;
+const int echoPin = 6;
 
-void setup() {
-  pinMode(sensorPin, INPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
-  Serial.begin(9600); // Start serial communication to monitor count
+int inches = 0;
+int cm = 0;
+int count = 0;
+bool objectPreviouslyDetected = false;
+
+long readUltrasonicDistance(int triggerPin, int echoPin)
+{
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  
+  // Reads the echo pin and returns duration in microseconds
+  return pulseIn(echoPin, HIGH);
 }
 
-void loop() {
-  sensorState = digitalRead(sensorPin);
+void setup()
+{
+  pinMode(triggerPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  Serial.begin(9600);
+}
 
-  // Detect a rising edge (LOW to HIGH transition - motion detected)
-  if (sensorState == HIGH && lastSensorState == LOW) {
-    objectCount++;
-    digitalWrite(LED_BUILTIN, HIGH); // Turn LED on
-    Serial.print("Motion detected! Count: ");
-    Serial.println(objectCount);
-    delay(1000); // Keep LED on for a short time (adjust as needed)
-    digitalWrite(LED_BUILTIN, LOW); // Turn LED off
+void loop()
+{
+  long duration = readUltrasonicDistance(triggerPin, echoPin);
+
+  // Convert time to distance
+  cm = duration * 0.034 / 2;     // Speed of sound: 343 m/s = 0.034 cm/µs
+  inches = cm / 2.54;
+
+  int threshold = 10; // Distance in cm to trigger counting
+
+  if (cm > 0 && cm <= threshold) {
+    if (!objectPreviouslyDetected) {
+      count++;
+      Serial.print("Object detected! Count: ");
+      Serial.println(count);
+      objectPreviouslyDetected = true;
+    }
+  } else {
+    objectPreviouslyDetected = false;
   }
 
-  lastSensorState = sensorState; // Store the last state for edge detection
-  delay(50); // Small delay to improve stability
+  delay(100);
 }
+

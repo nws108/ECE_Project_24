@@ -1,109 +1,145 @@
-// ----------- Pressure Sensor Right-of-Way System -----------
+// Define LED pins for first system (pressure indicator)
+const int redLED1 = 2;
+const int greenLED1 = 3;
+const int redLED2 = 4;
+const int greenLED2 = 5;
 
-// Define LED pins for pressure indicators
-const int redLED1 = 2;  // Sensor A0 controls this
-const int greenLED1 = 3;  
-const int redLED2 = 4;   // Sensor A1 now controls this
-const int greenLED2 = 5;  
+// Define LED pins for second system (right-of-way)
+#define RED_LIGHT_1 2
+#define GREEN_LIGHT_1 3
+#define RED_LIGHT_2 4
+#define GREEN_LIGHT_2 5
 
 // Define sensor pins
 #define SENSOR_1 A0
 #define SENSOR_2 A1
 
-// Thresholds. Can be adjusted as need. Will be 25, 25, 25 or 50, 50, 50.
-const int pressureThreshold1 = 500;
-const int pressureThreshold2 = 500;
-const int threshold = 100;
+// Pressure thresholds
+const int pressureThreshold1 = 50;
+const int pressureThreshold2 = 50;
+const int threshold = 50; // Right-of-way threshold
 
-int lastRightOfWay = 0; // 0 = none, 1 = car1, 2 = car2
-
-// ----------- Ultrasonic Sensor Vehicle Counter -----------
-
+// Variable to store last state
+int lastRightOfWay = 0; // 0 = No priority, 1 = Car 1, 2 = Car 2
+// Ultrasonic code
 const int triggerPin = 7;
 const int echoPin = 6;
 
+int inches = 0;
 int cm = 0;
 int count = 0;
 bool objectPreviouslyDetected = false;
 
-// ----------- Setup -----------
+long readUltrasonicDistance(int triggerPin, int echoPin)
+{
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  
+  // Reads the echo pin and returns duration in microseconds
+  return pulseIn(echoPin, HIGH);
+}
 
 void setup() {
-  // Pressure system setup
+  // Initialize LED pins for both systems
   pinMode(redLED1, OUTPUT);
   pinMode(greenLED1, OUTPUT);
   pinMode(redLED2, OUTPUT);
   pinMode(greenLED2, OUTPUT);
+  
+  pinMode(RED_LIGHT_1, OUTPUT);
+  pinMode(GREEN_LIGHT_1, OUTPUT);
+  pinMode(RED_LIGHT_2, OUTPUT);
+  pinMode(GREEN_LIGHT_2, OUTPUT);
 
+  // Initialize sensor inputs
   pinMode(SENSOR_1, INPUT);
   pinMode(SENSOR_2, INPUT);
 
-  // Default lights: both red
-  digitalWrite(redLED1, HIGH);
-  digitalWrite(greenLED1, LOW);
-  digitalWrite(redLED2, HIGH);
-  digitalWrite(greenLED2, LOW);
-
+  // Default states: Both red
+  digitalWrite(RED_LIGHT_1, HIGH);
+  digitalWrite(GREEN_LIGHT_1, LOW);
+  digitalWrite(RED_LIGHT_2, HIGH);
+  digitalWrite(GREEN_LIGHT_2, LOW);
   // Ultrasonic setup
   pinMode(triggerPin, OUTPUT);
   pinMode(echoPin, INPUT);
 
-  Serial.begin(9600); // For ultrasonic only
+  Serial.begin(9600);
+  
 }
 
-// ----------- Main Loop -----------
-
 void loop() {
-  // -------- Pressure Sensor Logic --------
+  {
+  // Read sensor values
   int pressureValue1 = analogRead(SENSOR_1);
   int pressureValue2 = analogRead(SENSOR_2);
 
-  // Sensor LED feedback
-  digitalWrite(redLED1, pressureValue1 > pressureThreshold1 ? HIGH : LOW);
-  digitalWrite(greenLED1, pressureValue1 > pressureThreshold1 ? LOW : HIGH);
 
-  digitalWrite(redLED2, pressureValue2 > pressureThreshold2 ? HIGH : LOW);
-  digitalWrite(greenLED2, pressureValue2 > pressureThreshold2 ? LOW : HIGH);
+
+  // LED control for pressure detection
+  if (pressureValue1 > pressureThreshold1) {
+    digitalWrite(redLED1, HIGH);
+    digitalWrite(greenLED1, LOW);
+  } else {
+    digitalWrite(redLED1, LOW);
+    digitalWrite(greenLED1, HIGH);
+  }
+
+  if (pressureValue2 > pressureThreshold2) {
+    digitalWrite(redLED2, HIGH);
+    digitalWrite(greenLED2, LOW);
+  } else {
+    digitalWrite(redLED2, LOW);
+    digitalWrite(greenLED2, HIGH);
+  }
 
   // Right-of-way logic
   bool car1 = pressureValue1 > threshold;
   bool car2 = pressureValue2 > threshold;
 
   if (car1 && !car2) {
-    lastRightOfWay = 1;
+    lastRightOfWay = 1; // Car 1 gets priority
   } else if (car2 && !car1) {
-    lastRightOfWay = 2;
+    lastRightOfWay = 2; // Car 2 gets priority
   } else if (car1 && car2 && lastRightOfWay == 0) {
-    lastRightOfWay = 1;
+    lastRightOfWay = 1; // Default to Car 1 if both pressed at the same time
   } else if (!car1 && !car2) {
-    lastRightOfWay = 0;
+    lastRightOfWay = 0; // No cars detected
   }
-
-  // Control right-of-way LEDs
+  
+  // Control right-of-way lights
   if (lastRightOfWay == 1) {
-    digitalWrite(redLED1, LOW);
-    digitalWrite(greenLED1, HIGH);
-    digitalWrite(redLED2, HIGH);
-    digitalWrite(greenLED2, LOW);
+    digitalWrite(RED_LIGHT_1, LOW);
+    digitalWrite(GREEN_LIGHT_1, HIGH);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
   } else if (lastRightOfWay == 2) {
-    digitalWrite(redLED1, HIGH);
-    digitalWrite(greenLED1, LOW);
-    digitalWrite(redLED2, LOW);
-    digitalWrite(greenLED2, HIGH);
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, LOW);
+    digitalWrite(GREEN_LIGHT_2, HIGH);
   } else {
-    digitalWrite(redLED1, HIGH);
-    digitalWrite(greenLED1, LOW);
-    digitalWrite(redLED2, HIGH);
-    digitalWrite(greenLED2, LOW);
+    // Default state: Both red if no pressure detected
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
   }
 
-  // -------- Ultrasonic Motion Detection --------
+  delay(750);
+  }
   long duration = readUltrasonicDistance(triggerPin, echoPin);
-  cm = duration * 0.034 / 2;
 
-  int distanceThreshold = 10; // cm
+  // Convert time to distance
+  cm = duration * 0.034 / 2;     // Speed of sound: 343 m/s = 0.034 cm/µs
+  inches = cm / 2.54;
 
-  if (cm > 0 && cm <= distanceThreshold) {
+  int threshold = 10; // Distance in cm to trigger counting
+
+  if (cm > 0 && cm <= threshold) {
     if (!objectPreviouslyDetected) {
       count++;
       Serial.print("Object detected! Count: ");
@@ -114,16 +150,5 @@ void loop() {
     objectPreviouslyDetected = false;
   }
 
-  delay(100); // Tune as needed
-}
-
-// ----------- Read Ultrasonic Distance -----------
-
-long readUltrasonicDistance(int triggerPin, int echoPin) {
-  digitalWrite(triggerPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(triggerPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(triggerPin, LOW);
-  return pulseIn(echoPin, HIGH);
+  delay(100);
 }

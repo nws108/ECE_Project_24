@@ -1,0 +1,42 @@
+// Pin definitions
+const int batteryPin = A0;  // Battery connected via voltage divider
+const int solarPin = A1;    // Solar panel connected via voltage divider
+
+// Voltage divider ratio (e.g., 10kΩ + 10kΩ = 2:1)
+const float voltageDividerRatio = 2.0;
+
+// Arduino reference voltage and ADC resolution
+const float referenceVoltage = 5.0;
+const int adcResolution = 1023;
+
+void setup() {
+  Serial.begin(9600);
+  delay(1000);
+  Serial.println("Starting Solar and Battery Voltage Monitoring...");
+}
+
+void loop() {
+  // Read analog values from both pins
+  int rawBattery = analogRead(batteryPin);
+  int rawSolar = analogRead(solarPin);
+
+  // Convert raw readings to voltages
+  float batteryVoltage = (rawBattery * referenceVoltage / adcResolution) * voltageDividerRatio;
+  float solarVoltage = (rawSolar * referenceVoltage / adcResolution) * voltageDividerRatio;
+
+  // Display battery info
+  Serial.print("Battery Raw: ");
+  Serial.print(rawBattery);
+  Serial.print("  Voltage: ");
+  Serial.print(batteryVoltage, 2);
+  Serial.print(" V\t");
+
+  // Display solar info
+  Serial.print("Solar Raw: ");
+  Serial.print(rawSolar);
+  Serial.print("  Voltage: ");
+  Serial.print(solarVoltage, 2);
+  Serial.println(" V");
+
+  delay(2000);  // Wait 2 seconds before next reading
+}

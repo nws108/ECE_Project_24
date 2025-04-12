@@ -1,0 +1,211 @@
+// Define LED pins for the first system (pressure indicator)
+const int redLED1 = 2;
+const int greenLED1 = 3;
+const int redLED2 = 4;
+const int greenLED2 = 5;
+
+// Define LED pins for the second system (right-of-way)
+#define RED_LIGHT_1 2
+#define GREEN_LIGHT_1 3
+#define RED_LIGHT_2 4
+#define GREEN_LIGHT_2 5
+
+// Define sensor pins
+#define SENSOR_1 A0
+#define SENSOR_2 A1
+
+// Pressure thresholds
+const int pressureThreshold1 = 50;
+const int pressureThreshold2 = 50;
+const int threshold = 50; // Right-of-way threshold
+
+// Variable to store the last state
+int lastRightOfWay = 0; // 0 = No priority, 1 = Car 1, 2 = Car 2
+
+// Ultrasonic code
+const int triggerPin = 7;
+const int echoPin = 6;
+int inches = 0;
+int cm = 0;
+int count = 0;
+bool objectPreviouslyDetected = false;
+
+long readUltrasonicDistance(int triggerPin, int echoPin) {
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+
+  return pulseIn(echoPin, HIGH);
+}
+
+// Define the analog pin for reading the battery voltage
+const int batteryPin = A4;  // Pin connected to the voltage divider (A4)
+
+// Voltage divider scaling factor (since the resistors are equal, the voltage is halved)
+const float voltageScaleFactor = 2.0;  // Scaling factor for 10kΩ + 10kΩ resistors
+
+// Define LED pins for the RGB LED (adjust as necessary for your setup)
+const int redPin = 9;
+const int greenPin = 10;
+const int bluePin = 11;
+
+void setup() {
+  // Initialize LED pins for both systems
+  pinMode(redLED1, OUTPUT);
+  pinMode(greenLED1, OUTPUT);
+  pinMode(redLED2, OUTPUT);
+  pinMode(greenLED2, OUTPUT);
+
+  pinMode(RED_LIGHT_1, OUTPUT);
+  pinMode(GREEN_LIGHT_1, OUTPUT);
+  pinMode(RED_LIGHT_2, OUTPUT);
+  pinMode(GREEN_LIGHT_2, OUTPUT);
+
+  // Initialize sensor inputs
+  pinMode(SENSOR_1, INPUT);
+  pinMode(SENSOR_2, INPUT);
+
+  // Default states: Both red
+  digitalWrite(RED_LIGHT_1, HIGH);
+  digitalWrite(GREEN_LIGHT_1, LOW);
+  digitalWrite(RED_LIGHT_2, HIGH);
+  digitalWrite(GREEN_LIGHT_2, LOW);
+
+  // Ultrasonic setup
+  pinMode(triggerPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  // Start serial communication for debugging
+  Serial.begin(9600);
+  
+  // Set up RGB LED pins
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+}
+
+void loop() {
+  // Read sensor values
+  int pressureValue1 = analogRead(SENSOR_1);
+  int pressureValue2 = analogRead(SENSOR_2);
+
+  // LED control for pressure detection
+  if (pressureValue1 > pressureThreshold1) {
+    digitalWrite(redLED1, HIGH);
+    digitalWrite(greenLED1, LOW);
+  } else {
+    digitalWrite(redLED1, LOW);
+    digitalWrite(greenLED1, HIGH);
+  }
+
+  if (pressureValue2 > pressureThreshold2) {
+    digitalWrite(redLED2, HIGH);
+    digitalWrite(greenLED2, LOW);
+  } else {
+    digitalWrite(redLED2, LOW);
+    digitalWrite(greenLED2, HIGH);
+  }
+
+  // Right-of-way logic
+  bool car1 = pressureValue1 > threshold;
+  bool car2 = pressureValue2 > threshold;
+
+  if (car1 && !car2) {
+    lastRightOfWay = 1; // Car 1 gets priority
+  } else if (car2 && !car1) {
+    lastRightOfWay = 2; // Car 2 gets priority
+  } else if (car1 && car2 && lastRightOfWay == 0) {
+    lastRightOfWay = 1; // Default to Car 1 if both pressed at the same time
+  } else if (!car1 && !car2) {
+    lastRightOfWay = 0; // No cars detected
+  }
+  
+  // Control right-of-way lights
+  if (lastRightOfWay == 1) {
+    digitalWrite(RED_LIGHT_1, LOW);
+    digitalWrite(GREEN_LIGHT_1, HIGH);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
+  } else if (lastRightOfWay == 2) {
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, LOW);
+    digitalWrite(GREEN_LIGHT_2, HIGH);
+  } else {
+    // Default state: Both red if no pressure detected
+    digitalWrite(RED_LIGHT_1, HIGH);
+    digitalWrite(GREEN_LIGHT_1, LOW);
+    digitalWrite(RED_LIGHT_2, HIGH);
+    digitalWrite(GREEN_LIGHT_2, LOW);
+  }
+
+  // Read the battery voltage from the analog pin
+  int batteryReading = analogRead(batteryPin);
+  
+  // Convert the reading to actual voltage (based on the 5V reference and scaling factor)
+  float voltage = (batteryReading * (5.0 / 1023.0)) * voltageScaleFactor;
+
+  // Calculate the battery percentage (assuming a range of 3.0V to 4.2V for a typical Li-ion battery)
+  float batteryPercentage = map(voltage * 100, 300, 420, 0, 100);  // Map voltage (in mV) to percentage
+
+  // Clamp the battery percentage to be between 0% and 100%
+  if (batteryPercentage < 0) {
+    batteryPercentage = 0;
+  }
+  if (batteryPercentage > 100) {
+    batteryPercentage = 100;
+  }
+
+  // Logic to control the LED color based on the voltage
+  if (voltage >= 3.6) {
+    // Good charge (3.6V to 4.2V) - Green LED
+    setRGB(0, 255, 0);   // Full Green
+  } else if (voltage >= 2.8) {
+    // Medium charge (2.8V to 3.6V) - Blue LED
+    setRGB(0, 0, 255);   // Full Blue
+  } else {
+    // Low charge (below 2.8V) - Red LED
+    setRGB(255, 0, 0);   // Full Red
+  }
+
+  // Ultrasonic sensor part: Count objects
+  long duration = readUltrasonicDistance(triggerPin, echoPin);
+  
+  // Convert time to distance
+  cm = duration * 0.034 / 2;     // Speed of sound: 343 m/s = 0.034 cm/µs
+  inches = cm / 2.54;
+
+  int thresholdDistance = 30; // Distance in cm to trigger counting
+
+  if (cm > 0 && cm <= thresholdDistance) {
+    if (!objectPreviouslyDetected) {
+      count++;
+      objectPreviouslyDetected = true;
+    }
+  } else {
+    objectPreviouslyDetected = false;
+  }
+
+  // Print the battery percentage, voltage, and object count to the serial monitor
+  Serial.print("Battery: ");
+  Serial.print(batteryPercentage);
+  Serial.print("% | Voltage: ");
+  Serial.print(voltage);
+  Serial.print("V | Objects detected: ");
+  Serial.println(count);
+
+  // Short delay for serial output (adjusted to prevent flooding)
+  delay(500);  // Adjusted delay for manageable serial output
+}
+
+// Helper function to set the RGB LED colors with brightness adjustment
+void setRGB(int redValue, int greenValue, int blueValue) {
+  int brightness = 32; // Adjust this value to reduce the overall brightness even more
+
+  // Set the RGB LED pins with adjusted brightness
+  analogWrite(redPin, redValue * brightness / 255);    // Adjust the red pin
+  analogWrite(greenPin, greenValue * brightness / 255); // Adjust the green pin
+  analogWrite(bluePin, blueValue * brightness / 255);   // Adjust the blue pin
+}

@@ -30,6 +30,14 @@ int cm = 0;
 int count = 0;
 bool objectPreviouslyDetected = false;
 
+// Second Ultrasonic Sensor
+const int triggerPin2 = 13;
+const int echoPin2 = 12;
+int cm2 = 0;
+int inches2 = 0;
+int count2 = 0;
+bool objectPreviouslyDetected2 = false;
+
 long readUltrasonicDistance(int triggerPin, int echoPin) {
   digitalWrite(triggerPin, LOW);
   delayMicroseconds(2);
@@ -76,6 +84,10 @@ void setup() {
   // Ultrasonic setup
   pinMode(triggerPin, OUTPUT);
   pinMode(echoPin, INPUT);
+
+  // Second ultrasonic setup
+  pinMode(triggerPin2, OUTPUT);
+  pinMode(echoPin2, INPUT);
 
   // Start serial communication for debugging
   Serial.begin(9600);
@@ -159,14 +171,14 @@ void loop() {
   }
 
   // Logic to control the LED color based on the voltage
-  if (voltage >= 3.6) {
+  if (voltage >= 4.8) {
     // Good charge (3.6V to 4.2V) - Green LED
     setRGB(0, 255, 0);   // Full Green
-  } else if (voltage >= 2.8) {
-    // Medium charge (2.8V to 3.6V) - Blue LED
+  } else if (voltage >= 3.6) {
+    // Medium charge (3.6V to 4.2V) - Blue LED
     setRGB(0, 0, 255);   // Full Blue
   } else {
-    // Low charge (below 2.8V) - Red LED
+    // Low charge (below 3.6V) - Red LED
     setRGB(255, 0, 0);   // Full Red
   }
 
@@ -174,7 +186,7 @@ void loop() {
   long duration = readUltrasonicDistance(triggerPin, echoPin);
   
   // Convert time to distance
-  cm = duration * 0.034 / 2;     // Speed of sound: 343 m/s = 0.034 cm/µs
+  cm = duration * 0.034 / 2;
   inches = cm / 2.54;
 
   int thresholdDistance = 30; // Distance in cm to trigger counting
@@ -188,24 +200,40 @@ void loop() {
     objectPreviouslyDetected = false;
   }
 
-  // Print the battery percentage, voltage, and object count to the serial monitor
+  // Second ultrasonic sensor part: Count objects
+  long duration2 = readUltrasonicDistance(triggerPin2, echoPin2);
+  
+  cm2 = duration2 * 0.034 / 2;
+  inches2 = cm2 / 2.54;
+
+  if (cm2 > 0 && cm2 <= thresholdDistance) {
+    if (!objectPreviouslyDetected2) {
+      count2++;
+      objectPreviouslyDetected2 = true;
+    }
+  } else {
+    objectPreviouslyDetected2 = false;
+  }
+
+  // Print the battery percentage, voltage, and object counts to the serial monitor
   Serial.print("Battery: ");
   Serial.print(batteryPercentage);
   Serial.print("% | Voltage: ");
   Serial.print(voltage);
-  Serial.print("V | Objects detected: ");
-  Serial.println(count);
+  Serial.print("V | Sensor 1 Count: ");
+  Serial.print(count);
+  Serial.print(" | Sensor 2 Count: ");
+  Serial.println(count2);
 
   // Short delay for serial output (adjusted to prevent flooding)
-  delay(500);  // Adjusted delay for manageable serial output
+  delay(500);
 }
 
 // Helper function to set the RGB LED colors with brightness adjustment
 void setRGB(int redValue, int greenValue, int blueValue) {
   int brightness = 32; // Adjust this value to reduce the overall brightness even more
 
-  // Set the RGB LED pins with adjusted brightness
-  analogWrite(redPin, redValue * brightness / 255);    // Adjust the red pin
-  analogWrite(greenPin, greenValue * brightness / 255); // Adjust the green pin
-  analogWrite(bluePin, blueValue * brightness / 255);   // Adjust the blue pin
+  analogWrite(redPin, redValue * brightness / 255);    
+  analogWrite(greenPin, greenValue * brightness / 255); 
+  analogWrite(bluePin, blueValue * brightness / 255);   
 }

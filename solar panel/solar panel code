@@ -1,0 +1,34 @@
+// Sensor input pins
+const int voltagePin = A0, currentPin = A1, batteryLevelPin = A2;
+const int mpptControlPin = 9;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(mpptControlPin, OUTPUT);
+}
+
+void loop() {
+  float voltage = analogRead(voltagePin) * 0.0489;   // Adjust as per voltage divider
+  float current = analogRead(currentPin) * 0.0098;   // Adjust as per current sensor
+  float batteryLevel = analogRead(batteryLevelPin) * 0.488; // Battery % scale
+
+  float power = voltage * current;
+  Serial.print("V: "); Serial.print(voltage);
+  Serial.print(" A: "); Serial.print(current);
+  Serial.print(" W: "); Serial.print(power);
+  Serial.print(" Battery: "); Serial.print(batteryLevel); Serial.println("%");
+
+  static float prevPower = 0;
+  static int duty = 128;
+
+  if (batteryLevel < 75) {
+    duty += (power > prevPower) ? 5 : -5;
+    duty = constrain(duty, 0, 255);
+    analogWrite(mpptControlPin, duty);
+  } else {
+    analogWrite(mpptControlPin, 0); // stop charging
+  }
+
+  prevPower = power;
+  delay(1000);
+}

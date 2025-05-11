@@ -1,51 +1,71 @@
-const int triggerPin = 7;
-const int echoPin = 6;
+const int triggerPin1 = 7;
+const int echoPin1 = 6;
 
-int inches = 0;
-int cm = 0;
+const int triggerPin2 = 13;
+const int echoPin2 = 12;
+
+int cm1 = 0, cm2 = 0;
+int inches1 = 0, inches2 = 0;
 int count = 0;
-bool objectPreviouslyDetected = false;
 
-long readUltrasonicDistance(int triggerPin, int echoPin)
-{
+bool objectPreviouslyDetected1 = false;
+bool objectPreviouslyDetected2 = false;
+
+long readUltrasonicDistance(int triggerPin, int echoPin) {
   digitalWrite(triggerPin, LOW);
   delayMicroseconds(2);
   digitalWrite(triggerPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(triggerPin, LOW);
-  
-  // Reads the echo pin and returns duration in microseconds
+
   return pulseIn(echoPin, HIGH);
 }
 
-void setup()
-{
-  pinMode(triggerPin, OUTPUT);
-  pinMode(echoPin, INPUT);
+void setup() {
+  pinMode(triggerPin1, OUTPUT);
+  pinMode(echoPin1, INPUT);
+  
+  pinMode(triggerPin2, OUTPUT);
+  pinMode(echoPin2, INPUT);
+  
   Serial.begin(9600);
 }
 
-void loop()
-{
-  long duration = readUltrasonicDistance(triggerPin, echoPin);
+void loop() {
+  long duration1 = readUltrasonicDistance(triggerPin1, echoPin1);
+  long duration2 = readUltrasonicDistance(triggerPin2, echoPin2);
 
-  // Convert time to distance
-  cm = duration * 0.034 / 2;     // Speed of sound: 343 m/s = 0.034 cm/µs
-  inches = cm / 2.54;
+  cm1 = duration1 * 0.034 / 2;
+  cm2 = duration2 * 0.034 / 2;
 
-  int threshold = 10; // Distance in cm to trigger counting
+  inches1 = cm1 / 2.54;
+  inches2 = cm2 / 2.54;
 
-  if (cm > 0 && cm <= threshold) {
-    if (!objectPreviouslyDetected) {
+  int threshold = 10; // cm
+
+  // Sensor 1
+  if (cm1 > 0 && cm1 <= threshold) {
+    if (!objectPreviouslyDetected1) {
       count++;
-      Serial.print("Object detected! Count: ");
+      Serial.print("Object detected by Sensor 1! Count: ");
       Serial.println(count);
-      objectPreviouslyDetected = true;
+      objectPreviouslyDetected1 = true;
     }
   } else {
-    objectPreviouslyDetected = false;
+    objectPreviouslyDetected1 = false;
+  }
+
+  // Sensor 2
+  if (cm2 > 0 && cm2 <= threshold) {
+    if (!objectPreviouslyDetected2) {
+      count++;
+      Serial.print("Object detected by Sensor 2! Count: ");
+      Serial.println(count);
+      objectPreviouslyDetected2 = true;
+    }
+  } else {
+    objectPreviouslyDetected2 = false;
   }
 
   delay(100);
 }
-
